@@ -148,17 +148,17 @@ cmd.set("label_font_id", 7, "p2_label")
 cmd.hide("everything", "p2_label")
 cmd.show("label", "p2_label")
 
-# P3-4
-cmd.select("p3_4", "resi 189+190+191+192+168+167+166+165+192")
-cmd.set("surface_color", "palecyan", "p3_4")
-cmd.show("surface", "p3_4")
-cmd.pseudoatom("p3_4_label", "p3_4")
-cmd.set("label_color", "palecyan", "p3_4_label")
-cmd.set("label_size", -0.8, "p3_4_label")
-cmd.set("label_font_id", 7, "p3_4_label")
+# P3-5
+cmd.select("p3_5", "resi 189+190+191+192+168+167+166+165+192")
+cmd.set("surface_color", "palecyan", "p3_5")
+cmd.show("surface", "p3_5")
+cmd.pseudoatom("p3_5_label", "p3_5")
+cmd.set("label_color", "palecyan", "p3_5_label")
+cmd.set("label_size", -0.8, "p3_5_label")
+cmd.set("label_font_id", 7, "p3_5_label")
 # hide psuedoatom
-cmd.hide("everything", "p3_4_label")
-cmd.show("label", "p3_4_label")
+cmd.hide("everything", "p3_5_label")
+cmd.show("label", "p3_5_label")
 
 pymol.finish_launching()
 
