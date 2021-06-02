@@ -46,9 +46,12 @@ def calc_rmsd(
 
             else:
                 pocket_sel = (
-                    "not backbone and not name H* and resid " + f"{pockets[pocket]} and not altloc B"
+                    "not backbone and not name H* and resid "
+                    + f"{pockets[pocket]} and not altloc B"
                 )
-                ref_pocket_sel = "not backbone and not name H*  and resid " + f"{pockets[pocket]}"
+                ref_pocket_sel = (
+                    "not backbone and not name H*  and resid " + f"{pockets[pocket]}"
+                )
 
             # Calculate RMSD of current pocket selection against reference pocket
             pocket_rmsd = rmsd(
@@ -224,4 +227,4 @@ if __name__ == "__main__":
 
     csv_name2 = "mpro_pockets_max_flex_rmsds.csv"
     print(f"writing rmsd values to {csv_name2}")
-    max_df.to_csv(csv_name2)
+    max_df_rmsd.to_csv(csv_name2)
