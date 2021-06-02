@@ -1,6 +1,7 @@
 import argparse
 
 import MDAnalysis as mda
+from numpy.core.fromnumeric import amin
 import pandas as pd
 from MDAnalysis.analysis.rms import rmsd
 
@@ -45,9 +46,9 @@ def calc_rmsd(
 
             else:
                 pocket_sel = (
-                    "not name H* and resid " + f"{pockets[pocket]} and not altloc B"
+                    "not backbone and not name H* and resid " + f"{pockets[pocket]} and not altloc B"
                 )
-                ref_pocket_sel = "not name H*  and resid " + f"{pockets[pocket]}"
+                ref_pocket_sel = "not backbone and not name H*  and resid " + f"{pockets[pocket]}"
 
             # Calculate RMSD of current pocket selection against reference pocket
             pocket_rmsd = rmsd(
@@ -120,7 +121,7 @@ if __name__ == "__main__":
     quin_result = calc_rmsd(quin_fragments, pockets, path)
     benzo_result = calc_rmsd(benzo_fragments, pockets, path)
 
-    # Get a sorted list (highest to lowest) of RMSDs
+    # Get a sorted list (lowest to highest) of RMSDs
     amino_p1_displacement = sort_results(amino_result, "P1")
     amino_p1_prime_displacement = sort_results(amino_result, "P1_prime")
     amino_p2_displacement = sort_results(amino_result, "P2")
@@ -141,35 +142,32 @@ if __name__ == "__main__":
     benzo_p2_displacement = sort_results(benzo_result, "P2")
     benzo_p3_4_5_displacement = sort_results(benzo_result, "P3_4_5")
 
-    print(amino_result[amino_p1_displacement[0]])
-    print(amino_result[amino_p1_displacement[0]]["P1"])
-
     amino_rmsd = [
-        amino_result[amino_p1_displacement[0]]["P1"],
-        amino_result[amino_p1_prime_displacement[0]]["P1_prime"],
-        amino_result[amino_p2_displacement[0]]["P2"],
-        amino_result[amino_p3_4_5_displacement[0]]["P3_4_5"],
+        amino_result[amino_p1_displacement[-1]]["P1"],
+        amino_result[amino_p1_prime_displacement[-1]]["P1_prime"],
+        amino_result[amino_p2_displacement[-1]]["P2"],
+        amino_result[amino_p3_4_5_displacement[-1]]["P3_4_5"],
     ]
 
     ugi_rmsd = [
-        ugi_result[ugi_p1_displacement[0]]["P1"],
-        ugi_result[ugi_p1_prime_displacement[0]]["P1_prime"],
-        ugi_result[ugi_p2_displacement[0]]["P2"],
-        ugi_result[ugi_p3_4_5_displacement[0]]["P3_4_5"],
+        ugi_result[ugi_p1_displacement[-1]]["P1"],
+        ugi_result[ugi_p1_prime_displacement[-1]]["P1_prime"],
+        ugi_result[ugi_p2_displacement[-1]]["P2"],
+        ugi_result[ugi_p3_4_5_displacement[-1]]["P3_4_5"],
     ]
 
     quin_rmsd = [
-        quin_result[quin_p1_displacement[0]]["P1"],
-        quin_result[quin_p1_prime_displacement[0]]["P1_prime"],
-        quin_result[quin_p2_displacement[0]]["P2"],
-        quin_result[quin_p3_4_5_displacement[0]]["P3_4_5"],
+        quin_result[quin_p1_displacement[-1]]["P1"],
+        quin_result[quin_p1_prime_displacement[-1]]["P1_prime"],
+        quin_result[quin_p2_displacement[-1]]["P2"],
+        quin_result[quin_p3_4_5_displacement[-1]]["P3_4_5"],
     ]
 
     benzo_rmsd = [
-        benzo_result[benzo_p1_displacement[0]]["P1"],
-        benzo_result[benzo_p1_prime_displacement[0]]["P1_prime"],
-        benzo_result[benzo_p2_displacement[0]]["P2"],
-        benzo_result[benzo_p3_4_5_displacement[0]]["P3_4_5"],
+        benzo_result[benzo_p1_displacement[-1]]["P1"],
+        benzo_result[benzo_p1_prime_displacement[-1]]["P1_prime"],
+        benzo_result[benzo_p2_displacement[-1]]["P2"],
+        benzo_result[benzo_p3_4_5_displacement[-1]]["P3_4_5"],
     ]
 
     max_df_rmsd = pd.DataFrame(
@@ -184,28 +182,28 @@ if __name__ == "__main__":
     max_df = pd.DataFrame(
         {
             "amino": [
-                amino_p1_displacement[0],
-                amino_p1_prime_displacement[0],
-                amino_p2_displacement[0],
-                amino_p3_4_5_displacement[0],
+                amino_p1_displacement[-1],
+                amino_p1_prime_displacement[-1],
+                amino_p2_displacement[-1],
+                amino_p3_4_5_displacement[-1],
             ],
             "ugi": [
-                ugi_p1_displacement[0],
-                ugi_p1_prime_displacement[0],
-                ugi_p2_displacement[0],
-                ugi_p3_4_5_displacement[0],
+                ugi_p1_displacement[-1],
+                ugi_p1_prime_displacement[-1],
+                ugi_p2_displacement[-1],
+                ugi_p3_4_5_displacement[-1],
             ],
             "quin": [
-                quin_p1_displacement[0],
-                quin_p1_prime_displacement[0],
-                quin_p2_displacement[0],
-                quin_p3_4_5_displacement[0],
+                quin_p1_displacement[-1],
+                quin_p1_prime_displacement[-1],
+                quin_p2_displacement[-1],
+                quin_p3_4_5_displacement[-1],
             ],
             "benzo": [
-                benzo_p1_displacement[0],
-                benzo_p1_prime_displacement[0],
-                benzo_p2_displacement[0],
-                benzo_p3_4_5_displacement[0],
+                benzo_p1_displacement[-1],
+                benzo_p1_prime_displacement[-1],
+                benzo_p2_displacement[-1],
+                benzo_p3_4_5_displacement[-1],
             ],
         }
     )
