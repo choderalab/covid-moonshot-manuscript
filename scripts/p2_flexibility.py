@@ -23,10 +23,10 @@ cmd.reset()
 cmd.delete("all")
 
 # Specify fragment codes from each series
-amino_p2 = "Mpro-x10322_0A"
-ugi_p2 = "Mpro-x10082_0A"
-quin_p2 = "Mpro-P0008_0B"
-benzo_p2 = "Mpro-x11789_0A"
+amino_p2 = "Mpro-x10598_0A"
+ugi_p2 = "Mpro-x3359_0A"
+quin_p2 = "Mpro-x11366_0A"
+benzo_p2 = "Mpro-x11757_0A"
 
 fragments = [amino_p2, ugi_p2, quin_p2, benzo_p2]
 
@@ -103,12 +103,16 @@ cmd.show("label", "p2_label")
 pymol.finish_launching()
 
 # Create images
+print("Creating images for P2...")
 for i, fragment in zip([0, 1, 2, 3], fragments):
+    fragment_key = {0: "amino", 1:"ugi", 2: "quin", 3: "benzo"}
+    print(fragment_key[i], fragment)
+
     cmd.enable(f"p2-{i}-{fragment}-ligand")
     cmd.enable(f"p2-{i}-{fragment}-protein")
 
     cmd.ray(720, 720)
-    cmd.png(f"./p2_flex_{i}.png")
+    cmd.png(f"./p2_flex_{fragment_key[i]}_{fragment}.png")
 
     cmd.disable(f"p2-{i}-{fragment}-ligand")
     cmd.disable(f"p2-{i}-{fragment}-protein")
