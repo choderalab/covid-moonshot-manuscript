@@ -1,8 +1,7 @@
 import argparse
+
 import MDAnalysis as mda
 import pandas as pd
-import os
-
 from MDAnalysis.analysis.rms import rmsd
 
 parser = argparse.ArgumentParser(description="Calculate MPro pocket flexibility")
@@ -22,12 +21,19 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-def calc_rmsd(fragments, pockets, path, superposition=False, backbone=False):
-    df = {fragment: {} for fragment in fragments}
+def calc_rmsd(
+    fragments: list,
+    pockets: dict,
+    path: str,
+    superposition: bool = False,
+    backbone: bool = False,
+) -> dict:
+    results = {fragment: {} for fragment in fragments}
 
     for fragment in fragments:
         for pocket in pockets:
 
+            # Create MDAnalysis Universe object for current fragment PDB
             u = mda.Universe(path + f"{fragment}/" + f"{fragment}_apo-desolv.pdb")
 
             # make selections, don't count alternative locations (?)
@@ -50,19 +56,20 @@ def calc_rmsd(fragments, pockets, path, superposition=False, backbone=False):
                 superposition=superposition,
             )
 
-            df[fragment][pocket] = pocket_rmsd
+            # Populate dictionary with results for each fragment and each pocket
+            results[fragment][pocket] = pocket_rmsd
 
-    return df
+    return results
 
 
-def sort_results(data, pocket_string):
+def sort_results(data: dict, pocket_string: str) -> dict:
 
     sorted_keys = sorted(data, key=lambda x: (data[x][pocket_string]))
 
     return sorted_keys
 
 
-def get_fragment_list(metadata_file, series):
+def get_fragment_list(metadata_file: str, series: str) -> list:
 
     series_dict = {
         "amino": "Aminopyridine-like",
@@ -107,12 +114,13 @@ if __name__ == "__main__":
     quin_fragments = get_fragment_list(metadata_file, "quin")
     benzo_fragments = get_fragment_list(metadata_file, "benzo")
 
+    # Calculate the RMSD for each series
     amino_result = calc_rmsd(amino_fragments, pockets, path)
     ugi_result = calc_rmsd(ugi_fragments, pockets, path)
     quin_result = calc_rmsd(quin_fragments, pockets, path)
     benzo_result = calc_rmsd(benzo_fragments, pockets, path)
 
-    # get a sorted list (highest to lowest) of RMSDs
+    # Get a sorted list (highest to lowest) of RMSDs
     amino_p1_displacement = sort_results(amino_result, "P1")
     amino_p1_prime_displacement = sort_results(amino_result, "P1_prime")
     amino_p2_displacement = sort_results(amino_result, "P2")
