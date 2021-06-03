@@ -1,8 +1,7 @@
-import pymol
-from pymol import cmd, util
 from sys import argv
 
-import os
+import pymol
+from pymol import cmd, util
 
 # usage: pymol -cq script_name.py -- path/to/fragments/
 
@@ -48,8 +47,14 @@ util.cbaw("*-protein")
 cmd.spectrum("b", "white_green", "*-protein", minimum=0, maximum=1)
 
 # TODO: simplify this selection string
-cmd.show("sticks", f"*-protein and not hydrogen and not name N and not name C and not name O and not resn 02J and not resn PJE and not resn 010 and not resn PRO and b>0")
-cmd.show("sticks", f"*-protein and not hydrogen and resn PRO and not name C and not name O and b>0")
+cmd.show(
+    "sticks",
+    f"*-protein and not hydrogen and not name N and not name C and not name O and not resn 02J and not resn PJE and not resn 010 and not resn PRO and b>0",
+)
+cmd.show(
+    "sticks",
+    f"*-protein and not hydrogen and resn PRO and not name C and not name O and b>0",
+)
 # util.cnc(f"*-protein")
 
 # let beta sheets follow correct path so sticks match up
