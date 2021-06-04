@@ -164,4 +164,4 @@ pymol.finish_launching()
 
 # Create image
 cmd.ray(720, 720)
-cmd.png("fragment_screen_binding_pocket.png")
+cmd.png("fragment_screen_binding_pocket.png", dpi=300)

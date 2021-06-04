@@ -126,4 +126,4 @@ pymol.finish_launching()
 
 # Create image
 cmd.ray(720, 720)
-cmd.png("./central_methoxy_benzo.png")
+cmd.png("./central_methoxy_benzo.png", dpi=300)

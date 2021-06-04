@@ -109,7 +109,7 @@ for i, fragment in zip([0, 1, 2, 3], fragments):
     cmd.enable(f"p1-{i}-{fragment}-protein")
 
     cmd.ray(720, 720)
-    cmd.png(f"./p1_flex_{fragment_key[i]}_{fragment}.png")
+    cmd.png(f"./p1_flex_{fragment_key[i]}_{fragment}.png", dpi=300)
 
     cmd.disable(f"p1-{i}-{fragment}-ligand")
     cmd.disable(f"p1-{i}-{fragment}-protein")

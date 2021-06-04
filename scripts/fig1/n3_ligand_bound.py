@@ -129,4 +129,4 @@ pymol.finish_launching()
 
 # Create image
 cmd.ray(720, 720)
-cmd.png("n3_ligand_bound.png")
+cmd.png("n3_ligand_bound.png", dpi=300)

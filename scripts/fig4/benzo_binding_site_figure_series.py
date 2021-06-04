@@ -152,4 +152,4 @@ cmd.show("label", "p3_5_label")
 pymol.finish_launching()
 
 cmd.ray(720, 720)
-cmd.png("./benzo_lead_series.png")
+cmd.png("./benzo_lead_series.png", dpi=300)
