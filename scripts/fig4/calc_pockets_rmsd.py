@@ -166,10 +166,6 @@ if __name__ == "__main__":
     # these are RMSDs of each pocket with different
     # histograms for each lead series
 
-    # for pocket, result in zip(
-    #     ["P1", "P1_prime", "P2", "P3_4_5"],
-    #     [amino_result, ugi_result, quin_result, benzo_result],
-    # ):
     d = {
         "amino": amino_result,
         "ugi": ugi_result,
@@ -178,21 +174,15 @@ if __name__ == "__main__":
     }
 
     for pocket in ["P1", "P1_prime", "P2", "P3_4_5"]:
-        print(pocket)
         df_store = []
         for series, result in d.items():
-            print(series)
 
             df_store.append(get_pocket_rmsd(pocket, result, series))
-            # pocket_df_ugi = get_pocket_rmsd(pocket, result, "ugi")
-            # pocket_df_quin = get_pocket_rmsd(pocket, result, "quin")
-            # pocket_df_benzo = get_pocket_rmsd(pocket, result, "benzo")
 
         df = pd.concat(df_store)
 
-        # plotting
+        # Plotting
         plot_pocket_hist(df, pocket)
-        print(df)
 
     # Get a sorted list (lowest to highest) of RMSDs
     amino_p1_displacement = sort_results(amino_result, "P1")
