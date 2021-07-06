@@ -1,9 +1,11 @@
 import argparse
 
+import matplotlib.pyplot as plt
 import MDAnalysis as mda
-from numpy.core.fromnumeric import amin
 import pandas as pd
+import seaborn as sns
 from MDAnalysis.analysis.rms import rmsd
+from numpy.core.fromnumeric import amin
 
 parser = argparse.ArgumentParser(description="Calculate MPro pocket flexibility")
 parser.add_argument(
@@ -68,9 +70,31 @@ def calc_rmsd(
 
 def sort_results(data: dict, pocket_string: str) -> dict:
 
-    sorted_keys = sorted(data, key=lambda x: (data[x][pocket_string]))
+    # dict_to_sort = data.pop("series")
+    dict_to_sort = data
+
+    sorted_keys = sorted(dict_to_sort, key=lambda x: (dict_to_sort[x][pocket_string]))
 
     return sorted_keys
+
+
+def plot_pocket_hist(df: pd.DataFrame, save_name: str) -> None:
+
+    g = sns.displot(
+        df,
+        x="RMSD",
+        hue="Series",
+        palette="colorblind",
+        stat="density",
+        multiple="stack",
+    )
+
+    plt.xlabel(r"RMSD ($\AA$)")
+
+    print(f"Saving plot as {save_name}.png")
+    plt.savefig(f"{save_name}_hist.png")
+
+    plt.clf()
 
 
 def get_fragment_list(metadata_file: str, series: str) -> list:
@@ -91,7 +115,21 @@ def get_fragment_list(metadata_file: str, series: str) -> list:
     # Get the crystal names
     df_series_xtal_names = df_series["crystal_name"].to_list()
 
+    df_series_xtal_names
+
     return df_series_xtal_names
+
+
+def get_pocket_rmsd(pocket: str, result: dict, series: str):
+
+    rmsd_results = {"RMSD": [], "Pocket": pocket, "Series": series}
+
+    for fragment in result:
+        rmsd_results["RMSD"].append(result[fragment][pocket])
+
+    df = pd.DataFrame(rmsd_results)
+
+    return df
 
 
 if __name__ == "__main__":
@@ -123,6 +161,38 @@ if __name__ == "__main__":
     ugi_result = calc_rmsd(ugi_fragments, pockets, path)
     quin_result = calc_rmsd(quin_fragments, pockets, path)
     benzo_result = calc_rmsd(benzo_fragments, pockets, path)
+
+    # Create large dataframe for histogram plots
+    # these are RMSDs of each pocket with different
+    # histograms for each lead series
+
+    # for pocket, result in zip(
+    #     ["P1", "P1_prime", "P2", "P3_4_5"],
+    #     [amino_result, ugi_result, quin_result, benzo_result],
+    # ):
+    d = {
+        "amino": amino_result,
+        "ugi": ugi_result,
+        "quin": quin_result,
+        "benzo": benzo_result,
+    }
+
+    for pocket in ["P1", "P1_prime", "P2", "P3_4_5"]:
+        print(pocket)
+        df_store = []
+        for series, result in d.items():
+            print(series)
+
+            df_store.append(get_pocket_rmsd(pocket, result, series))
+            # pocket_df_ugi = get_pocket_rmsd(pocket, result, "ugi")
+            # pocket_df_quin = get_pocket_rmsd(pocket, result, "quin")
+            # pocket_df_benzo = get_pocket_rmsd(pocket, result, "benzo")
+
+        df = pd.concat(df_store)
+
+        # plotting
+        plot_pocket_hist(df, pocket)
+        print(df)
 
     # Get a sorted list (lowest to highest) of RMSDs
     amino_p1_displacement = sort_results(amino_result, "P1")
