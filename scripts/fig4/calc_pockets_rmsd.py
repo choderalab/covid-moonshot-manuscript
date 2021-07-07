@@ -80,19 +80,37 @@ def sort_results(data: dict, pocket_string: str) -> dict:
 
 def plot_pocket_hist(df: pd.DataFrame, save_name: str) -> None:
 
-    g = sns.displot(
-        df,
+    pymol_colours = [
+        (0.99, 0.82, 0.65), # amino - wheat
+        (0.65, 0.9, 0.65), # ugi - pale green
+        (1.0, 0.5, 1.0), # quin - violet
+        (0.96, 0.41, 0.23), # benzo - cb_orange
+    ]
+    
+    sns.set_palette(sns.color_palette(pymol_colours))
+
+    g = sns.kdeplot(
+        data=df,
         x="RMSD",
         hue="Series",
-        palette="colorblind",
-        stat="density",
-        multiple="stack",
+        fill=True,
+        alpha=0.75,
+        linewidth=1,
+        common_norm=False,
     )
 
-    plt.xlabel(r"RMSD ($\AA$)")
+    # control figure aesthetics
+    g.set(yticklabels=[])
+    g.set(yticks=[])
+    g.set(ylabel="Number of structures")
+    g.set(xlabel=r"Pocket RMSD ($\AA$)")
+    g.set(xlim=[0,3.5])
+
+    # Remove top and right box lines
+    sns.despine()
 
     print(f"Saving plot as {save_name}.png")
-    plt.savefig(f"{save_name}_hist.png")
+    plt.savefig(f"{save_name}_hist.png", dpi=300)
 
     plt.clf()
 
@@ -122,7 +140,15 @@ def get_fragment_list(metadata_file: str, series: str) -> list:
 
 def get_pocket_rmsd(pocket: str, result: dict, series: str):
 
-    rmsd_results = {"RMSD": [], "Pocket": pocket, "Series": series}
+    full_names = {
+        "amino": "Aminopyridines",
+        "ugi": "Ugis",
+        "quin": "Quinolones",
+        "benzo": "Benzotriazoles"
+
+    }
+
+    rmsd_results = {"RMSD": [], "Pocket": pocket, "Series": full_names[series]}
 
     for fragment in result:
         rmsd_results["RMSD"].append(result[fragment][pocket])
