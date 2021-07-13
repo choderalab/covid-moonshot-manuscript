@@ -78,7 +78,7 @@ def sort_results(data: dict, pocket_string: str) -> dict:
     return sorted_keys
 
 
-def plot_pocket_hist(df: pd.DataFrame, save_name: str) -> None:
+def plot_pocket_hist(df: pd.DataFrame, save_name: str, legend=False, despine_y=False) -> None:
 
     pymol_colours = [
         (0.99, 0.82, 0.65), # amino - wheat
@@ -89,6 +89,8 @@ def plot_pocket_hist(df: pd.DataFrame, save_name: str) -> None:
     
     sns.set_palette(sns.color_palette(pymol_colours))
 
+    fig, ax = plt.subplots(figsize = (1.5,1.5))
+
     g = sns.kdeplot(
         data=df,
         x="RMSD",
@@ -97,17 +99,35 @@ def plot_pocket_hist(df: pd.DataFrame, save_name: str) -> None:
         alpha=0.75,
         linewidth=1,
         common_norm=False,
+        legend=False,
+        ax=ax,
     )
 
     # control figure aesthetics
     g.set(yticklabels=[])
     g.set(yticks=[])
-    g.set(ylabel="Number of structures")
+    if not despine_y:
+        g.set(ylabel="Number of structures")
     g.set(xlabel=r"Pocket RMSD ($\AA$)")
-    g.set(xlim=[0,3.5])
+    g.set(xlim=[0, 4])
+    g.set(title=df.Pocket.tolist()[0])
 
     # Remove top and right box lines
     sns.despine()
+    if despine_y:
+        sns.despine(left=True)
+        g.set(ylabel="")
+
+    # This is a hack as the legend isn't directly accessible from g
+    if legend:
+        plt.legend(
+            labels = ['Benzotriazoles','Quinolones', 'Ugis', 'Aminopyridines'],
+            loc = 'right',
+            fontsize=4.5,
+            frameon=False,
+            )
+
+    plt.tight_layout()
 
     print(f"Saving plot as {save_name}.png")
     plt.savefig(f"{save_name}_hist.png", dpi=300)
@@ -140,7 +160,7 @@ def get_fragment_list(metadata_file: str, series: str) -> list:
 
 def get_pocket_rmsd(pocket: str, result: dict, series: str):
 
-    full_names = {
+    full_series_names = {
         "amino": "Aminopyridines",
         "ugi": "Ugis",
         "quin": "Quinolones",
@@ -148,7 +168,15 @@ def get_pocket_rmsd(pocket: str, result: dict, series: str):
 
     }
 
-    rmsd_results = {"RMSD": [], "Pocket": pocket, "Series": full_names[series]}
+    full_pocket_names = {
+        "P1": "P1",
+        "P1_prime": r"P1$^\prime$",
+        "P2": "P2",
+        "P3_4_5": "P3-5"
+
+    }
+
+    rmsd_results = {"RMSD": [], "Pocket": full_pocket_names[pocket], "Series": full_series_names[series]}
 
     for fragment in result:
         rmsd_results["RMSD"].append(result[fragment][pocket])
@@ -200,6 +228,7 @@ if __name__ == "__main__":
     }
 
     for pocket in ["P1", "P1_prime", "P2", "P3_4_5"]:
+        legend = False
         df_store = []
         for series, result in d.items():
 
@@ -208,7 +237,9 @@ if __name__ == "__main__":
         df = pd.concat(df_store)
 
         # Plotting
-        plot_pocket_hist(df, pocket)
+        if pocket == "P1_prime": # add legend to one plot
+            legend = True
+        plot_pocket_hist(df, pocket, legend=legend, despine_y=True)
 
     # Get a sorted list (lowest to highest) of RMSDs
     amino_p1_displacement = sort_results(amino_result, "P1")
