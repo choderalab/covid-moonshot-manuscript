@@ -3,14 +3,17 @@ from sys import argv
 import pymol
 from pymol import cmd, util
 
-# usage: pymol -cq script_name.py -- pdb_file path/to/fragments/
+# usage: pymol -cq script_name.py -- pdb_file xtal_pdb_file path/to/fragments/ 
 
 pdb_arg = argv[1:][0]
 print(f"Using PDB file: {pdb_arg} for structures")
 
 pdb_name = f"{pdb_arg.split('.')[0]}"
 
-path = argv[1:][1]
+xtal_pdb_arg = argv[1:][1]
+print(f"Using PDB file: {xtal_pdb_arg} for crystallographic alignment")
+
+path = argv[1:][2]
 
 # Set some nice CB friendly colours
 cmd.set_color("cb_orange", [0.96, 0.41, 0.23])
@@ -34,7 +37,7 @@ cmd.delete("all")
 methoxy_benzo_fragment = 'P0157'
 cmd.load(path + f'Mpro-{methoxy_benzo_fragment}_0A/' + f'Mpro-{methoxy_benzo_fragment}_0A.sdf', f'methoxy_benzo-{methoxy_benzo_fragment}-ligand')
 cmd.load(f"{pdb_arg}", f'methoxy_benzo-{methoxy_benzo_fragment}-protein')
-cmd.load("/Users/williamglass/Desktop/moonshot_paper_2021/crystallographic/Mpro-P0157.pdb", f'methoxy_benzo-{methoxy_benzo_fragment}-protein2' )
+cmd.load(f"{xtal_pdb_arg}", f'methoxy_benzo-{methoxy_benzo_fragment}-protein2' )
 
 cmd.align(f'methoxy_benzo-{methoxy_benzo_fragment}-protein', f'methoxy_benzo-{methoxy_benzo_fragment}-protein2')
 

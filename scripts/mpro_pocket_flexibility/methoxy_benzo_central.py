@@ -2,10 +2,14 @@ import pymol
 from pymol import cmd, util
 from sys import argv
 
-# usage: pymol -cq script_name.py -- path/to/fragments/
+from pymol.creating import fragment
+
+# usage: pymol -cq script_name.py -- path/to/fragments/ fragment_code
 
 path = argv[1:][0]
 print(f"Using path: {path} for structures")
+fragment_code = argv[1:][1]
+print(f"Using fragment code: {fragment_code}")
 
 # Set some nice CB friendly colours
 cmd.set_color("cb_orange", [0.96, 0.41, 0.23])
@@ -24,13 +28,13 @@ cmd.reset()
 cmd.delete('all')
 
 # Load the central methoxy benzopyran
-methoxy_benzo_fragment = 'P0157'
-cmd.load(path + f'Mpro-{methoxy_benzo_fragment}_0A/' + f'Mpro-{methoxy_benzo_fragment}_0A.sdf', f'methoxy_benzo-{methoxy_benzo_fragment}-ligand')
-cmd.load(path + f'Mpro-{methoxy_benzo_fragment}_0A/' + f'Mpro-{methoxy_benzo_fragment}_0A_apo-desolv.pdb', f'methoxy_benzo-{methoxy_benzo_fragment}-protein')
+# fragment_code = 'P0157'
+cmd.load(path + f'Mpro-{fragment_code}_0A/' + f'Mpro-{fragment_code}_0A.sdf', f'methoxy_benzo-{fragment_code}-ligand')
+cmd.load(path + f'Mpro-{fragment_code}_0A/' + f'Mpro-{fragment_code}_0A_apo-desolv.pdb', f'methoxy_benzo-{fragment_code}-protein')
 
 # Sort out ligand colours
-cmd.color("cyan", f"methoxy_benzo-{methoxy_benzo_fragment}-ligand")
-util.cbac(f'methoxy_benzo-{methoxy_benzo_fragment}-ligand')
+#cmd.color("green", f"methoxy_benzo-{fragment_code}-ligand")
+util.cbag(f'methoxy_benzo-{fragment_code}-ligand')
 
 # Remove waters
 cmd.remove('resn HOH')
@@ -38,19 +42,19 @@ cmd.deselect()
 
 # Show molecular representation
 cmd.hide('all')
-cmd.dss(f'methoxy_benzo-{methoxy_benzo_fragment}-protein')
+cmd.dss(f'methoxy_benzo-{fragment_code}-protein')
 cmd.bg_color('white')
 util.cbaw('*-protein')
 
 cmd.show('sticks', f'*-protein and not hydrogen')
 cmd.show('surface', f'*-protein and not hydrogen')
 cmd.disable('*-protein')
-cmd.enable(f'methoxy_benzo-{methoxy_benzo_fragment}-protein')
-cmd.enable(f'methoxy_benzo-{methoxy_benzo_fragment}-ligand')
+cmd.enable(f'methoxy_benzo-{fragment_code}-protein')
+cmd.enable(f'methoxy_benzo-{fragment_code}-ligand')
 
 cmd.set('surface_color', 'white')
 
-cmd.show('sticks', f'methoxy_benzo-{methoxy_benzo_fragment}-ligand and not hydrogen')
+cmd.show('sticks', f'methoxy_benzo-{fragment_code}-ligand and not hydrogen')
 
 # Sort transparency for surfaces and catalytic dyad
 cmd.set('surface_mode', 3)
@@ -126,4 +130,6 @@ pymol.finish_launching()
 
 # Create image
 cmd.ray(720, 720)
-cmd.png("./central_methoxy_benzo.png", dpi=300)
+# cmd.png("./central_methoxy_benzo.png", dpi=300)
+cmd.png(f"./central_methoxy_benzo_{fragment_code}.png", dpi=300)
+
