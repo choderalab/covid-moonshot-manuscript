@@ -1,9 +1,6 @@
-import os
-import re
-from sys import argv
-
 import pymol
 from pymol import cmd, util
+from sys import argv
 
 # usage: pymol -cq script_name.py -- path/to/fragments/
 
@@ -26,44 +23,40 @@ cmd.set("ray_trace_mode", 0)
 cmd.reset()
 cmd.delete("all")
 
-# Load reference aminopyridine structure for alignment
-cmd.load(
-    path + f"Mpro-x10237_0A/" + f"Mpro-x10237_0A_apo-desolv.pdb",
-    f"aminopyridines-x10237-protein",
-)
+fragments = [
+    "Mpro-x10820_0A",
+    "Mpro-x10876_0A",
+    "Mpro-x10870_0A",
+    "Mpro-x11454_0A",
+    "Mpro-x11493_0A",
+    "Mpro-x11424_0A",
+    "Mpro-x11432_0A",
+    "Mpro-x10871_0A",
+    "Mpro-x10466_0A",
+    "Mpro-x11798_0A",
+    "Mpro-x11797_0A",
+    "Mpro-x12423_0A",
+    "Mpro-x12177_0A",
+    "Mpro-x11789_0A",
+    "Mpro-x12204_0A",
+    "Mpro-x12026_0A",
+    "Mpro-x12419_0A",
+    "Mpro-x12143_0A",
+    "Mpro-x11757_0A",
+    "Mpro-x12136_0A",
+]
 
-# Load N3 protein and use for alignment
-cmd.load("6lu7.pdb")
-cmd.align("(6lu7 and chain A)", "aminopyridines-x10237-protein")
-cmd.select("N3-protein", "6lu7 and (chain A or chain B)")
-
-# Show all fragments
-show_fragments = True
-if show_fragments:
-    sdf_files = []
-
-    # Get all fragments
-    for dirpath, _, filenames in os.walk(f"{path}"):
-        for name in filenames:
-            if name.endswith(".sdf"):
-                # Filter out fragments that aren't in the pocket (manual inspection)
-                if name in [
-                    "Mpro-x2929_0A.sdf",
-                    "Mpro-x1119_0A.sdf",
-                    "Mpro-x0887_0A.sdf",
-                ]:
-                    continue
-                sdf_files.append(os.path.join(f"{path}", dirpath, name))
-
-    for sdf_file in sdf_files:
-        # Load fragment
-        try:
-            match = re.search("Mpro-(?P<fragment>x\d+)_", sdf_file)
-            fragment = match.group("fragment")
-            cmd.load(sdf_file, f"fragment-{fragment}")
-        except:
-            continue
-    cmd.select("fragments", "fragment-*")
+# Load each fragment: ligand + apo protein
+for fragment in fragments:
+    cmd.load(
+        path + f"{fragment}/" + f"{fragment}.sdf", f"benzotriazoles-{fragment}-ligand"
+    )
+    cmd.load(
+        path + f"{fragment}/" + f"{fragment}_apo-desolv.pdb",
+        f"benzotriazoles-{fragment}-protein",
+    )
+cmd.color("deepolive", f"benzotriazoles-*")
+util.cnc(f"benzotriazoles-*")
 
 # remove waters
 cmd.remove("resn HOH")
@@ -71,41 +64,37 @@ cmd.deselect()
 
 # Show molecular representation
 cmd.hide("all")
-cmd.dss("6lu7")
 cmd.bg_color("white")
 util.cbaw("*-protein")
 
 cmd.show("sticks", f"*-protein and not hydrogen")
-cmd.show("surface", f"*-protein and not hydrogen")
+cmd.show("surface", f"benzotriazoles-Mpro-x10820_0A-protein and not hydrogen")
 cmd.disable("*-protein")
-cmd.enable("N3-protein")
+cmd.enable("benzotriazoles-Mpro-x10820_0A-protein and not hydrogen")
 
 cmd.set("surface_color", "white")
 
-if show_fragments:
-    # Show fragments as lines
-    cmd.show("lines", "fragments and not hydrogen")
-
 cmd.set("surface_mode", 3)
-
-# Sort transparency for surfaces and catalytic dyad
 cmd.set("transparency", 0.15)
 cmd.set("transparency", 1, "resi 145 and resn CYS")
 cmd.set("transparency", 1, "resi 41 and resn HIS")
 
-# Set the viewport and view
 cmd.viewport(720, 720)
+
 cmd.set_view(
     "\
-     0.894281626,   -0.385214210,   -0.227714524,\
-     0.184281662,   -0.146693677,    0.971858561,\
-    -0.407781065,   -0.911087275,   -0.060196333,\
-     0.000453793,    0.000144213,  -90.166122437,\
-   -21.955720901,    5.030100346,   28.572034836,\
-    76.987503052,  103.323318481,   20.000000000 "
+     0.889428616,   -0.456408978,    0.024401871,\
+    -0.099697880,   -0.141634151,    0.984882414,\
+    -0.446053863,   -0.878418088,   -0.171478689,\
+     0.000357639,    0.000210542,  -94.736244202,\
+   -21.802495956,    4.796146870,   28.488866806,\
+    81.561714172,  107.897544861,   20.000000000 "
 )
 
 cmd.show("sticks", "not hydrogen and *-ligand")
+
+# Hide all fragments
+cmd.deselect()
 
 cmd.hide("sticks", "hydrogen")
 
@@ -120,7 +109,7 @@ cmd.pseudoatom("p1_prime_label", "p1_prime")
 cmd.set("label_color", "cb_orange", "p1_prime_label")
 cmd.set("label_size", -0.8, "p1_prime_label")
 cmd.set("label_font_id", 7, "p1_prime_label")
-# hide psuedoatom
+# hide pseudoatom
 cmd.hide("everything", "p1_prime_label")
 cmd.show("label", "p1_prime_label")
 
@@ -132,7 +121,7 @@ cmd.pseudoatom("p1_label", "p1")
 cmd.set("label_color", "cb_yellow", "p1_label")
 cmd.set("label_size", -0.8, "p1_label")
 cmd.set("label_font_id", 7, "p1_label")
-# hide psuedoatom
+# hide pseudoatom
 cmd.hide("everything", "p1_label")
 cmd.show("label", "p1_label")
 
@@ -144,7 +133,7 @@ cmd.pseudoatom("p2_label", "p2")
 cmd.set("label_color", "cb_light_blue", "p2_label")
 cmd.set("label_size", -0.8, "p2_label")
 cmd.set("label_font_id", 7, "p2_label")
-# hide psuedoatom
+# hide pseudoatom
 cmd.hide("everything", "p2_label")
 cmd.show("label", "p2_label")
 
@@ -156,12 +145,11 @@ cmd.pseudoatom("p3_5_label", "p3_5")
 cmd.set("label_color", "palecyan", "p3_5_label")
 cmd.set("label_size", -0.8, "p3_5_label")
 cmd.set("label_font_id", 7, "p3_5_label")
-# hide psuedoatom
+# hide pseudoatom
 cmd.hide("everything", "p3_5_label")
 cmd.show("label", "p3_5_label")
 
 pymol.finish_launching()
 
-# Create image
 cmd.ray(720, 720)
-cmd.png("fragment_screen_binding_pocket.png")
+cmd.png("./benzo_lead_series.png", dpi=300)

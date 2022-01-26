@@ -1,9 +1,11 @@
 import argparse
 
+import matplotlib.pyplot as plt
 import MDAnalysis as mda
-from numpy.core.fromnumeric import amin
 import pandas as pd
+import seaborn as sns
 from MDAnalysis.analysis.rms import rmsd
+from numpy.core.fromnumeric import amin
 
 parser = argparse.ArgumentParser(description="Calculate MPro pocket flexibility")
 parser.add_argument(
@@ -68,9 +70,69 @@ def calc_rmsd(
 
 def sort_results(data: dict, pocket_string: str) -> dict:
 
-    sorted_keys = sorted(data, key=lambda x: (data[x][pocket_string]))
+    # dict_to_sort = data.pop("series")
+    dict_to_sort = data
+
+    sorted_keys = sorted(dict_to_sort, key=lambda x: (dict_to_sort[x][pocket_string]))
 
     return sorted_keys
+
+
+def plot_pocket_hist(df: pd.DataFrame, save_name: str, legend=False, despine_y=False) -> None:
+
+    pymol_colours = [
+        (0.99, 0.82, 0.65), # amino - wheat
+        (0.65, 0.9, 0.65), # ugi - pale green
+        (1.0, 0.5, 1.0), # quin - violet
+        (0.96, 0.41, 0.23), # benzo - cb_orange
+    ]
+    
+    sns.set_palette(sns.color_palette(pymol_colours))
+
+    fig, ax = plt.subplots(figsize = (1.5,1.5))
+
+    g = sns.kdeplot(
+        data=df,
+        x="RMSD",
+        hue="Series",
+        fill=True,
+        alpha=0.75,
+        linewidth=1,
+        common_norm=False,
+        legend=False,
+        ax=ax,
+    )
+
+    # control figure aesthetics
+    g.set(yticklabels=[])
+    g.set(yticks=[])
+    if not despine_y:
+        g.set(ylabel="Number of structures")
+    g.set(xlabel=r"Pocket RMSD ($\AA$)")
+    g.set(xlim=[0, 4])
+    g.set(title=df.Pocket.tolist()[0])
+
+    # Remove top and right box lines
+    sns.despine()
+    if despine_y:
+        sns.despine(left=True)
+        g.set(ylabel="")
+
+    # This is a hack as the legend isn't directly accessible from g
+    if legend:
+        plt.legend(
+            labels = ['Benzotriazoles','Quinolones', 'Ugis', 'Aminopyridines'],
+            loc = 'right',
+            fontsize=4.5,
+            frameon=False,
+            )
+
+    plt.tight_layout()
+
+    print(f"Saving plot as {save_name}.png")
+    plt.savefig(f"{save_name}_hist.png", dpi=300)
+
+    plt.clf()
 
 
 def get_fragment_list(metadata_file: str, series: str) -> list:
@@ -91,7 +153,37 @@ def get_fragment_list(metadata_file: str, series: str) -> list:
     # Get the crystal names
     df_series_xtal_names = df_series["crystal_name"].to_list()
 
+    df_series_xtal_names
+
     return df_series_xtal_names
+
+
+def get_pocket_rmsd(pocket: str, result: dict, series: str):
+
+    full_series_names = {
+        "amino": "Aminopyridines",
+        "ugi": "Ugis",
+        "quin": "Quinolones",
+        "benzo": "Benzotriazoles"
+
+    }
+
+    full_pocket_names = {
+        "P1": "P1",
+        "P1_prime": r"P1$^\prime$",
+        "P2": "P2",
+        "P3_4_5": "P3-5"
+
+    }
+
+    rmsd_results = {"RMSD": [], "Pocket": full_pocket_names[pocket], "Series": full_series_names[series]}
+
+    for fragment in result:
+        rmsd_results["RMSD"].append(result[fragment][pocket])
+
+    df = pd.DataFrame(rmsd_results)
+
+    return df
 
 
 if __name__ == "__main__":
@@ -123,6 +215,31 @@ if __name__ == "__main__":
     ugi_result = calc_rmsd(ugi_fragments, pockets, path)
     quin_result = calc_rmsd(quin_fragments, pockets, path)
     benzo_result = calc_rmsd(benzo_fragments, pockets, path)
+
+    # Create large dataframe for histogram plots
+    # these are RMSDs of each pocket with different
+    # histograms for each lead series
+
+    d = {
+        "amino": amino_result,
+        "ugi": ugi_result,
+        "quin": quin_result,
+        "benzo": benzo_result,
+    }
+
+    for pocket in ["P1", "P1_prime", "P2", "P3_4_5"]:
+        legend = False
+        df_store = []
+        for series, result in d.items():
+
+            df_store.append(get_pocket_rmsd(pocket, result, series))
+
+        df = pd.concat(df_store)
+
+        # Plotting
+        if pocket == "P1_prime": # add legend to one plot
+            legend = True
+        plot_pocket_hist(df, pocket, legend=legend, despine_y=True)
 
     # Get a sorted list (lowest to highest) of RMSDs
     amino_p1_displacement = sort_results(amino_result, "P1")
