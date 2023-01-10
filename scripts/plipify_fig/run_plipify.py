@@ -35,17 +35,20 @@ def main():
     ## Parse symlinks in output_dir
     args.output_dir = os.path.realpath(args.output_dir)
 
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
     structure_fns = [fn for fn in glob(args.input_glob)]
-    print(structure_fns)
+    # print(structure_fns)
     ## for debugging
-    # structure_fns = structure_fns[0:15]
+    structure_fns = structure_fns[0:100]
     structure_labels = [os.path.basename(os.path.dirname(fn)) for fn in structure_fns]
-    print(structure_labels)
+    # print(structure_labels)
 
     ## make new filenames and load structure objects
     structures = []
     for fn, label in tqdm(zip(structure_fns, structure_labels), total=len(structure_fns)):
-        new_fn = os.path.join(os.path.dirname(fn), f"{label}.pdb")
+        new_fn = os.path.join(args.output_dir, f"{label}.pdb")
         if not os.path.exists(new_fn):
             shutil.copy(fn, new_fn)
         structures.append(Structure.from_pdbfile(str(new_fn), ligand_name="LIG"))
@@ -74,6 +77,11 @@ def main():
             structure_name_type_dict['other'] += 1
     print(structure_name_type_dict)
 
+    # exclude 35 Mpro-P structures
+    filtered_structures = [s for s in structures if not (s.identifier.startswith('Mpro-P'))]
+    print('remaining: ', len(filtered_structures), 'from:', len(structures))
+    structures = filtered_structures
+
     # Review
     fp = InteractionFingerprint().calculate_fingerprint(
         structures,
@@ -84,8 +92,6 @@ def main():
         ensure_same_sequence=False
     )
     out_csv = os.path.join(args.output_dir, "plipify_results.csv")
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
     fp.to_csv(out_csv)
 
 if __name__ == "__main__":
