@@ -25,10 +25,10 @@ def get_args():
         required=True,
         help="Input glob that will return a list of PDB structures.",
     )
+
     parser.add_argument("-o", "--output_dir", required=True, help="Path to output directory")
 
     return parser.parse_args()
-
 
 def main():
     args = get_args()
@@ -48,7 +48,8 @@ def main():
     OUT.mkdir(exist_ok=True, parents=True)
 
     ## The other structures don't have the same length sequences so bad things happen
-    pdbs = list((DATA / "aligned").glob("Mpro-x*/*_bound_chain*.pdb")) + list((DATA / "aligned").glob("Mpro-z*/*_bound_chain*.pdb"))
+    # pdbs = list((DATA / "aligned").glob("Mpro-x*/*_bound_chain*.pdb")) + list((DATA / "aligned").glob("Mpro-z*/*_bound_chain*.pdb"))
+    pdbs = list((DATA / "aligned").glob("**/*_bound_chain*.pdb"))
     # print(pdbs)
     ## for debugging
     # pdbs = pdbs[0:200]
@@ -71,11 +72,22 @@ def main():
     print(f"Loaded {len(structures)} structures.")
 
     ## A bunch of filtering
-    lengths = pd.DataFrame([((s.identifier), len(s.sequence())) for s in structures], columns=["identifier", "length"])
-    # Remove entries where the difference sequence length - median sequence length is greater than one standard deviation
-    print('Sequence length median and std: ', lengths.length.median(), lengths.length.std())
+    ## TODO: Use mode instead of median? or only take sequences that have exactly the median?
+    ## Remove entries where the difference sequence length - median sequence length is greater than one standard
 
-    lengths = lengths[(lengths.length - lengths.length.median()).abs() < lengths.length.std()]
+    ## Collect Sequence and gap penalties
+    lengths = pd.DataFrame([((s.identifier), len(s.sequence()), s.sequence()) for s in structures],
+                           columns=["identifier", "length", "sequence"])
+    lengths["gapcount"] = lengths.sequence.str.count('-')
+
+    print('Sequence length median and std: ', lengths.length.median(), lengths.length.std())
+    print(f"{sum(lengths.gapcount > 0)} sequences with gaps to be removed.")
+
+
+    ## Perform the actual filtering
+    lengths = lengths[lengths.gapcount == 0]
+    # lengths = lengths[(lengths.length - lengths.length.median()).abs() < lengths.length.std()]
+    lengths = lengths[lengths.length == lengths.length.median()]
     filtered_structures = [s for s in structures if s.identifier in set(lengths.identifier.tolist())]
     print(len(pdbs), "->", len(structures), "->", len(filtered_structures), "=", len(pdbs) - len(filtered_structures),
           "structures filtered out")
