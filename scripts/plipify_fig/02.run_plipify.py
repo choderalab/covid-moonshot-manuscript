@@ -6,8 +6,11 @@ Written in the style of asapdiscovery repo scripts `https://github.com/choderala
 import argparse, os, sys
 from pathlib import Path
 from glob import glob
+
+import numpy as np
 from tqdm import tqdm
 import shutil
+import pdb as pdb_debugger
 
 from plipify.fingerprints import InteractionFingerprint
 from plipify.core import Structure
@@ -25,10 +28,36 @@ def get_args():
         required=True,
         help="Input glob that will return a list of PDB structures.",
     )
-
+    parser.add_argument(
+        "-csv",
+        "--filter_csv",
+        required=False,
+        default='Mpro_xtals_plip.csv',
+        help="Path to CSV file used to filter results.",
+    )
     parser.add_argument("-o", "--output_dir", required=True, help="Path to output directory")
 
     return parser.parse_args()
+
+def filter_by_csv(pdbs: [Path], csv_fn: str):
+    """
+    Load in a csv, grab the column labeled 'X-ray Structures: Dataset ID', and filter the list of Paths based on this.'
+    :param pdbs: [Path]
+    :param csv_fn: str
+    :return: [Path]
+    """
+    df = pd.read_csv(csv_fn)
+    structure_ids = [structure for structure in df['X-ray Structures: Dataset ID'] if type(structure) == str]
+    df['X-ray Structures: Dataset ID'].isna()
+    print(f"{len(structure_ids)} structure ids to use")
+    filtered_pdbs = []
+    for pdb in pdbs:
+        for structure_id in structure_ids:
+            if structure_id in str(pdb):
+                filtered_pdbs.append(pdb)
+                break
+    return filtered_pdbs
+
 
 def main():
     args = get_args()
@@ -50,6 +79,10 @@ def main():
     ## The other structures don't have the same length sequences so bad things happen
     # pdbs = list((DATA / "aligned").glob("Mpro-x*/*_bound_chain*.pdb")) + list((DATA / "aligned").glob("Mpro-z*/*_bound_chain*.pdb"))
     pdbs = list((DATA / "aligned").glob("**/*_bound_chain*.pdb"))
+    ## filter by csvfile
+    if args.filter_csv:
+        filtered_pdbs = filter_by_csv(pdbs, args.filter_csv)
+        pdbs = filtered_pdbs
     # print(pdbs)
     ## for debugging
     # pdbs = pdbs[0:200]
