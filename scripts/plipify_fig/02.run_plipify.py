@@ -47,7 +47,8 @@ def main():
     DATA.mkdir(exist_ok=True, parents=True)
     OUT.mkdir(exist_ok=True, parents=True)
 
-    pdbs = list((DATA / "aligned").glob("**/*_bound_chain*.pdb"))
+    ## The other structures don't have the same length sequences so bad things happen
+    pdbs = list((DATA / "aligned").glob("Mpro-x*/*_bound_chain*.pdb")) + list((DATA / "aligned").glob("Mpro-z*/*_bound_chain*.pdb"))
     # print(pdbs)
     ## for debugging
     # pdbs = pdbs[0:200]
@@ -91,10 +92,11 @@ def main():
             structure_name_type_dict['other'] += 1
     print(structure_name_type_dict)
 
-    # exclude 35 Mpro-P structures
-    filtered_structures = [s for s in structures if not (s.identifier.startswith('Mpro-P'))]
-    print('remaining: ', len(filtered_structures), 'from:', len(structures))
-    structures = filtered_structures
+    ## LEGACY CODE, LEAVING FOR NOW
+    # # exclude 35 Mpro-P structures
+    # filtered_structures = [s for s in structures if not (s.identifier.startswith('Mpro-J'))]
+    # print('remaining: ', len(filtered_structures), 'from:', len(structures))
+    # structures = filtered_structures
 
     # Review
     fp = InteractionFingerprint().calculate_fingerprint(
