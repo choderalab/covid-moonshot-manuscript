@@ -31,8 +31,7 @@ def get_args():
     parser.add_argument(
         "-csv",
         "--filter_csv",
-        required=False,
-        default='Mpro_xtals_plip.csv',
+        default=None,
         help="Path to CSV file used to filter results.",
     )
     parser.add_argument("-o", "--output_dir", required=True, help="Path to output directory")
@@ -78,7 +77,9 @@ def main():
 
     ## The other structures don't have the same length sequences so bad things happen
     # pdbs = list((DATA / "aligned").glob("Mpro-x*/*_bound_chain*.pdb")) + list((DATA / "aligned").glob("Mpro-z*/*_bound_chain*.pdb"))
-    pdbs = list((DATA / "aligned").glob("**/*_bound_chain*.pdb"))
+    # pdbs = list((DATA / "aligned").glob("**/*_bound_chain*.pdb"))
+    # pdbs = list(Path("/Users/alexpayne/lilac-mount-point/asap-datasets/plipify_prepped").glob("*.pdb"))
+    pdbs = list(Path("/Users/alexpayne/lilac-mount-point/asap-datasets/plipify_prepped_no_header").glob("no_header*.pdb"))
     ## filter by csvfile
     if args.filter_csv:
         filtered_pdbs = filter_by_csv(pdbs, args.filter_csv)
@@ -91,18 +92,20 @@ def main():
     ## make new filenames and load structure objects
     structures = []
     for path in tqdm(pdbs, total=len(pdbs)):
-        new_fn = OUT / Path(f"{path.parent.name}.pdb")
-        if not os.path.exists(new_fn):
-            shutil.copy(path, new_fn)
-        structure = Structure.from_pdbfile(str(new_fn), ligand_name="LIG")
+        # new_fn = OUT / Path(f"{path.parent.name}.pdb")
+        # if not os.path.exists(new_fn):
+        #     shutil.copy(path, new_fn)
+        structure = Structure.from_pdbfile(str(path), ligand_name="LIG")
 
         ## Skip structures with multiple binding sites
         if len(structure.binding_sites) != 1:
             print(
-                f"{path.relative_to(HERE)} contains {len(structure.binding_sites)} binding sites and we want exactly one.")
+                f"{path.name} contains {len(structure.binding_sites)} binding sites and we want exactly one.")
             continue
         structures.append(structure)
     print(f"Loaded {len(structures)} structures.")
+
+    pdb_debugger.set_trace()
 
     ## A bunch of filtering
     ## TODO: Use mode instead of median? or only take sequences that have exactly the median?
@@ -111,16 +114,21 @@ def main():
     ## Collect Sequence and gap penalties
     lengths = pd.DataFrame([((s.identifier), len(s.sequence()), s.sequence()) for s in structures],
                            columns=["identifier", "length", "sequence"])
-    lengths["gapcount"] = lengths.sequence.str.count('-')
+    pdb_debugger.set_trace()
 
+    lengths["gapcount"] = lengths.sequence.str.count('-')
+    pdb_debugger.set_trace()
     print('Sequence length median and std: ', lengths.length.median(), lengths.length.std())
     print(f"{sum(lengths.gapcount > 0)} sequences with gaps to be removed.")
 
 
     ## Perform the actual filtering
     lengths = lengths[lengths.gapcount == 0]
-    # lengths = lengths[(lengths.length - lengths.length.median()).abs() < lengths.length.std()]
-    lengths = lengths[lengths.length == lengths.length.median()]
+    pdb_debugger.set_trace()
+
+    lengths = lengths[(lengths.length - lengths.length.median()).abs() <= lengths.length.std()]
+    pdb_debugger.set_trace()
+    # lengths = lengths[lengths.length == lengths.length.median()]
     filtered_structures = [s for s in structures if s.identifier in set(lengths.identifier.tolist())]
     print(len(pdbs), "->", len(structures), "->", len(filtered_structures), "=", len(pdbs) - len(filtered_structures),
           "structures filtered out")
