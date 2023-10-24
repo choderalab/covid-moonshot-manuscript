@@ -11,7 +11,7 @@ import requests
 from Bio.PDB import *
 from plipify.core import Structure
 from plipify.fingerprints import InteractionFingerprint
-from plipify.visualization import VisPymol, fingerprint_writepdb
+from plipify.visualization import PymolVisualizer, fingerprint_writepdb
 from tqdm.auto import tqdm
 
 TARGET = "Mpro"
@@ -44,7 +44,7 @@ for nr, filepath in enumerate(pdbs):
     pdb_id = str(pdbs[nr]).split('/')[-1][:-4]
     chain_id = str(pdbs[nr]).split('/')[-1].split('_')[1][-1]
     new_filename=str(pdbs[nr])[:-4]+'_chain'+str(chain_id)+'.pdb'
-    
+
     ## Read the PDB file and extract the chain from structure[0]
     model = PDBParser(PERMISSIVE=1,QUIET=1).get_structure(pdb_id, filepath)[0]
     ### Save new file
@@ -53,7 +53,10 @@ for nr, filepath in enumerate(pdbs):
     io.save(new_filename)
 
 # Update the pdb list to pdb chain list
-pdbs = list((DATA / "aligned").glob("**/*_bound_chain*.pdb"))
+# pdbs = list((DATA / "aligned").glob("**/*_bound_chain*.pdb"))
+
+## The other structures don't have the same length sequences so bad things happen
+pdbs = list((DATA / "aligned").glob("Mpro-x*/*_bound_chain*.pdb")) + list((DATA / "aligned").glob("Mpro-z*/*_bound_chain*.pdb"))
 
 # Use plipify
 structures = []
@@ -120,8 +123,7 @@ spectrum_cols = ["white_green", "white_pink", "white_cyan", "white_red", "white_
 
 for i, interaction in enumerate(pdb_ints):
 
-    v = VisPymol(pdb=pdb_ints[interaction]._path)
-    v.load()
+    v = PymolVisualizer(pdb=pdb_ints[interaction]._path)
     v.set_style()
     v.create_image(surface=True, ligand_col="cyan", spectrum_col=spectrum_cols[i], show_ligand=False, cnc_protein=True)
     v.render(name=f"{interaction}_pymol_image", save_path="./output/")
